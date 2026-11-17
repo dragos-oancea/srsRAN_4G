@@ -270,13 +270,19 @@ rrc_interface_phy_lte::cell_search_ret_t sync::cell_search_start(phy_cell_t* fou
       break;
   }
 
-  cellsearch_earfcn_index++;
-  if (cellsearch_earfcn_index >= worker_com->args->dl_earfcn_list.size() or earfcn < 0) {
-    Info("Cell Search: No more frequencies in the current EARFCN set");
-    cellsearch_earfcn_index = 0;
-    ret.last_freq           = rrc_interface_phy_lte::cell_search_ret_t::NO_MORE_FREQS;
+  if (earfcn >= 0) {
+    // A specific EARFCN was requested (e.g. RRC redirection), there is no list to iterate over
+    ret.last_freq = rrc_interface_phy_lte::cell_search_ret_t::NO_MORE_FREQS;
   } else {
-    ret.last_freq = rrc_interface_phy_lte::cell_search_ret_t::MORE_FREQS;
+    // Advance to the next EARFCN of the configured list and wrap around after the last one
+    cellsearch_earfcn_index++;
+    if (cellsearch_earfcn_index >= worker_com->args->dl_earfcn_list.size()) {
+      Info("Cell Search: No more frequencies in the current EARFCN set");
+      cellsearch_earfcn_index = 0;
+      ret.last_freq           = rrc_interface_phy_lte::cell_search_ret_t::NO_MORE_FREQS;
+    } else {
+      ret.last_freq = rrc_interface_phy_lte::cell_search_ret_t::MORE_FREQS;
+    }
   }
 
   rrc_proc_state = PROC_IDLE;
